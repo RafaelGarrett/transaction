@@ -82,6 +82,8 @@ class TransactionController extends Controller
             ], 401);
         }
 
+        $userPayee = User::findOrFail($request->payee);
+
         $transaction = $this->transaction->create([
             'amount'=>$request->value,
             'origin_user'=>$request->payer,
@@ -95,9 +97,7 @@ class TransactionController extends Controller
             ], 500);
         }
 
-        $userPayee = User::findOrFail($request->payee);
         $accountPayee = $userPayee->relAccount;
-
         $accountPayer->update([
             'balance'=>$accountPayer->balance - $request->value
         ]);
