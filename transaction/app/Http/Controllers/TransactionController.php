@@ -5,9 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Models\Transaction;
 use App\Models\User;
-use GuzzleHttp;
-
-use function PHPSTORM_META\type;
+use App\Helpers\Helper;
 
 class TransactionController extends Controller
 {
@@ -68,8 +66,7 @@ class TransactionController extends Controller
             ], 418);
         }
         
-        $client = new GuzzleHttp\Client();
-        $res = $client->get('https://run.mocky.io/v3/5794d450-d2e2-4412-8131-73d0293ac1cc', ['verify' => false]);
+        $res = Helper::requestAPI($_ENV['URL_MOCK_AUTHORIZED_SERVICE']);
         $statusCode = $res->getStatusCode();
         if($statusCode != 200){
             return response()->json([
@@ -85,16 +82,6 @@ class TransactionController extends Controller
             ], 401);
         }
 
-        $userPayee = User::findOrFail($request->payee);
-        $accountPayee = $userPayee->relAccount;
-
-        $accountPayer->update([
-            'balance'=>$accountPayer->balance - $request->value
-        ]);
-        $accountPayee->update([
-            'balance'=>$accountPayee->balance + $request->value
-        ]);
-
         $transaction = $this->transaction->create([
             'amount'=>$request->value,
             'origin_user'=>$request->payer,
@@ -106,6 +93,32 @@ class TransactionController extends Controller
                 'status' => 'error',
                 'message' => 'Transaction fail.'
             ], 500);
+        }
+
+        $userPayee = User::findOrFail($request->payee);
+        $accountPayee = $userPayee->relAccount;
+
+        $accountPayer->update([
+            'balance'=>$accountPayer->balance - $request->value
+        ]);
+        $accountPayee->update([
+            'balance'=>$accountPayee->balance + $request->value
+        ]);
+
+        $res = Helper::requestAPI($_ENV['URL_MOCK_EMAIL_SERVICE']);
+        $statusCode = $res->getStatusCode();
+        if($statusCode != 200){
+            return response()->json([
+                'status' => 'error',
+                'message' => 'E-mail service unavailable.'
+            ], $statusCode);
+        }
+        $body = json_decode($res->getBody());
+        if(!$body->message){
+            return response()->json([
+                'status' => 'warning',
+                'message' => 'Notification cannot be sent.'
+            ], 418);
         }
         
         return response()->json([

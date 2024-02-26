@@ -52,7 +52,7 @@ class User extends Authenticatable
 
     public function relTransaction(): HasMany
     {
-        return $this->hasMany(Transaction::class, 'origin_user');
+        return $this->hasMany(Transaction::class, 'origin_user', 'id');
     }
 
     public function relAccount(): HasOne

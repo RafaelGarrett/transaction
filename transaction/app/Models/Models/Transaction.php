@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Models\Status;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Transaction extends Model
@@ -19,9 +20,9 @@ class Transaction extends Model
         return $this->hasOne(Status::class, 'id', 'status_id');
     }
 
-    public function relUser(): HasOne
+    public function relUser(): HasMany
     {
-        return $this->hasOne(User::class, 'id', 'origin_user');
+        return $this->hasMany(User::class, 'id', 'origin_user');
     }
 
 }
